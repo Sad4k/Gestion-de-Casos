@@ -2,7 +2,34 @@ import { createApp, ref, computed, watch, onMounted } from 'vue';
 
 createApp({
     setup() {
-        // State for cases
+        // New authentication state and login form
+        const isAuthenticated = ref(false);
+        const loginForm = ref({
+            username: '',
+            password: ''
+        });
+        const errorLogin = ref('');
+
+        const login = () => {
+            // Hard-coded credentials for demo purposes; in a real app, use secure authentication methods.
+            if (loginForm.value.username === 'admin' && loginForm.value.password === 'admin123') {
+                isAuthenticated.value = true;
+                sessionStorage.setItem('isLoggedIn', 'true');
+                errorLogin.value = '';
+                // Clear login form fields
+                loginForm.value.username = '';
+                loginForm.value.password = '';
+            } else {
+                errorLogin.value = 'Credenciales incorrectas. Inténtalo de nuevo.';
+            }
+        };
+
+        const logout = () => {
+            isAuthenticated.value = false;
+            sessionStorage.removeItem('isLoggedIn');
+        };
+
+        // Existing reactive states and methods
         const casos = ref([]);
         const selectedCase = ref(null);
         const searchQuery = ref('');
@@ -16,6 +43,8 @@ createApp({
         const showCloseCaseModal = ref(false);
         const showEditStepModal = ref(false);
         const showDeleteStepModal = ref(false);
+        const showConfigModal = ref(false);
+        const showResetConfirmModal = ref(false);
 
         // File handling states
         const attachmentFiles = ref([]);
@@ -51,8 +80,11 @@ createApp({
             timeout: null
         });
 
-        // Load cases from localStorage on app mount
+        // onMounted: load authentication state and cases
         onMounted(() => {
+            if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                isAuthenticated.value = true;
+            }
             const savedCases = localStorage.getItem('casos');
             if (savedCases) {
                 try {
@@ -61,7 +93,6 @@ createApp({
                     showNotification('error', 'Error al cargar casos guardados');
                 }
             } else {
-                // Add sample case if there are no cases
                 casos.value = [
                     {
                         id: 1,
@@ -738,8 +769,58 @@ createApp({
             closeCaseFiles.value.splice(index, 1);
         };
 
+        // Reset application data
+        const resetAllData = () => {
+            casos.value = [
+                {
+                    id: 1,
+                    titulo: 'Ejemplo de Caso',
+                    descripcion: 'Este es un ejemplo de caso para mostrar cómo funciona la aplicación.',
+                    estado: 'abierto',
+                    fechaCreacion: new Date().toISOString(),
+                    referencias: ['Ref-2023-001', 'Documento A-123'],
+                    historial: [
+                        {
+                            titulo: 'Caso abierto',
+                            descripcion: 'Se inició el caso en el sistema.',
+                            fecha: new Date().toISOString()
+                        }
+                    ]
+                }
+            ];
+            selectedCase.value = null;
+            saveCasesToLocalStorage();
+            showNotification('success', 'Datos restablecidos correctamente');
+            closeResetConfirmModal();
+            closeConfigModal();
+        };
+
+        const openConfigModal = () => {
+            showConfigModal.value = true;
+        };
+
+        const closeConfigModal = () => {
+            showConfigModal.value = false;
+        };
+
+        const openResetConfirmModal = () => {
+            showResetConfirmModal.value = true;
+            closeConfigModal();
+        };
+
+        const closeResetConfirmModal = () => {
+            showResetConfirmModal.value = false;
+        };
+
         // Return the state and methods
         return {
+            // Authentication state and methods
+            isAuthenticated,
+            loginForm,
+            errorLogin,
+            login,
+            logout,
+            // Existing state and methods
             casos,
             selectedCase,
             searchQuery,
@@ -751,6 +832,8 @@ createApp({
             showCloseCaseModal,
             showEditStepModal,
             showDeleteStepModal,
+            showConfigModal,
+            showResetConfirmModal,
             modalTitle,
             caseForm,
             stepForm,
@@ -800,7 +883,13 @@ createApp({
             closeDeleteStepModal,
             // Utility methods
             formatDate,
-            truncateText
+            truncateText,
+            // Configuration methods
+            openConfigModal,
+            closeConfigModal,
+            openResetConfirmModal,
+            closeResetConfirmModal,
+            resetAllData,
         };
     }
 }).mount('#app');
