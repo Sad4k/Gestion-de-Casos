@@ -4,12 +4,12 @@ import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } 
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDF0fwRZJUQfI1x0V16zmsmw6Jbe2p06jw",
+  authDomain: "personal-apps-db.firebaseapp.com",
+  projectId: "personal-apps-db",
+  storageBucket: "personal-apps-db.firebasestorage.app",
+  messagingSenderId: "312063054436",
+  appId: "1:312063054436:web:b1f907040ab5ed26534571"
 };
 
 const firebaseApp = initializeApp(firebaseConfig);
