@@ -669,12 +669,12 @@ button:disabled {
 }
 
 .btn.secondary {
-    background: transparent;
+    background: #2f2f2f;
     color: var(--text-color);
     border: 1px solid var(--border-color);
 }
 
-.btn�.secondary:hover {
+.btn.secondary:hover {
     background: #f0f4f8;
 }
 
