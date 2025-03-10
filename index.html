@@ -1,0 +1,745 @@
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Casos</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script type="importmap">
+        {
+            "imports": {
+                "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js"
+            }
+        }
+    </script>
+<script type="importmap">
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const modulo = await import("app.js");
+
+});
+
+ </script>
+
+    <script type="module" src="app.js"></script>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>Sistema de Gestión de Casos</h1>
+            <div class="user-controls">
+                <button @click="navigateTo('dashboard')" class="btn secondary" :class="{ primary: currentView === 'dashboard' }">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="3" width="7" height="9" rx="1" stroke="currentColor" stroke-width="2"/>
+                        <rect x="3" y="15" width="7" height="6" rx="1" stroke="currentColor" stroke-width="2"/>
+                        <rect x="14" y="3" width="7" height="6" rx="1" stroke="currentColor" stroke-width="2"/>
+                        <rect x="14" y="12" width="7" height="9" rx="1" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Dashboard
+                </button>
+                <button @click="navigateTo('cases')" class="btn secondary" :class="{ primary: currentView === 'cases' }">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="currentColor" stroke-width="2"/>
+                        <path d="M16 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M8 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M3 10H21" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Casos
+                </button>
+            </div>
+        </header>
+        
+        <main>
+            <!-- Dashboard View -->
+            <div v-if="currentView === 'dashboard'" class="dashboard-section">
+                <div class="dashboard-header">
+                    <h2>Dashboard</h2>
+                    <button @click="showNewCaseModal" class="btn primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 6V18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M6 12H18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Nuevo Caso
+                    </button>
+                </div>
+                
+                <div class="dashboard-cards">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Total de Casos</h3>
+                        </div>
+                        <div class="card-value">{{ dashboardStats.total }}</div>
+                        <div class="card-footer">
+                            Casos registrados en el sistema
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Casos Abiertos</h3>
+                        </div>
+                        <div class="card-value">{{ dashboardStats.openCases }}</div>
+                        <div class="card-footer">
+                            Casos en proceso o pendientes
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Casos Resueltos</h3>
+                        </div>
+                        <div class="card-value">{{ dashboardStats.resolvedCases }}</div>
+                        <div class="card-footer">
+                            Casos resueltos o cerrados
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-cards">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Estado de Casos</h3>
+                        </div>
+                        <div class="cases-by-status">
+                            <div class="progress-container">
+                                <div class="status-progress-label">
+                                    <span>Abiertos</span>
+                                    <span class="count">{{ dashboardStats.byStatus.abierto }}</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-value abierto" :style="{ width: dashboardStats.percentages.abierto + '%' }"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-container">
+                                <div class="status-progress-label">
+                                    <span>En Proceso</span>
+                                    <span class="count">{{ dashboardStats.byStatus['en-proceso'] }}</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-value en-proceso" :style="{ width: dashboardStats.percentages['en-proceso'] + '%' }"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-container">
+                                <div class="status-progress-label">
+                                    <span>Pendientes</span>
+                                    <span class="count">{{ dashboardStats.byStatus.pendiente }}</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-value pendiente" :style="{ width: dashboardStats.percentages.pendiente + '%' }"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-container">
+                                <div class="status-progress-label">
+                                    <span>Resueltos</span>
+                                    <span class="count">{{ dashboardStats.byStatus.resuelto }}</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-value resuelto" :style="{ width: dashboardStats.percentages.resuelto + '%' }"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-container">
+                                <div class="status-progress-label">
+                                    <span>Cerrados</span>
+                                    <span class="count">{{ dashboardStats.byStatus.cerrado }}</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-value cerrado" :style="{ width: dashboardStats.percentages.cerrado + '%' }"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Casos Recientes</h3>
+                        </div>
+                        <div class="recent-cases-list">
+                            <div 
+                                v-for="caso in dashboardStats.recentCases" 
+                                :key="caso.id" 
+                                class="recent-case-item"
+                                @click="selectCase(caso); navigateTo('cases')">
+                                <span class="recent-case-title">{{ caso.titulo }}</span>
+                                <span class="recent-case-date">{{ formatDate(caso.fechaCreacion) }}</span>
+                            </div>
+                            <div v-if="dashboardStats.recentCases.length === 0" class="no-cases">
+                                No hay casos recientes
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Pendientes de Contacto Externo</h3>
+                    </div>
+                    <div v-if="dashboardStats.pendingContactsArray.length > 0" class="pending-external-list">
+                        <div 
+                            v-for="contactGroup in dashboardStats.pendingContactsArray" 
+                            :key="contactGroup.person" 
+                            class="contact-person-group">
+                            <div class="contact-person-name">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                                <strong>{{ contactGroup.person }}</strong> 
+                                <span class="contact-case-count">({{ contactGroup.cases.length }} caso{{ contactGroup.cases.length > 1 ? 's' : '' }})</span>
+                            </div>
+                            <div 
+                                v-for="caso in contactGroup.cases" 
+                                :key="caso.id + (caso.stepTitle || '')" 
+                                class="pending-contact-case"
+                                @click="selectCase(casos.find(c => c.id === caso.id)); navigateTo('cases')">
+                                <div class="pending-contact-case-info">
+                                    <span class="pending-contact-case-title">{{ caso.titulo }}</span>
+                                    <span class="pending-contact-description">{{ truncateText(caso.descripcion, 60) }}</span>
+                                    <span v-if="caso.stepTitle" class="pending-contact-step">Paso: {{ caso.stepTitle }}</span>
+                                </div>
+                                <span class="status-badge" :class="caso.estado">
+                                    {{ caso.estado }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="card-footer">
+                        No hay casos pendientes de contacto externo
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cases View -->
+            <div v-if="currentView === 'cases'" class="dashboard">
+                <div class="sidebar">
+                    <div class="search-container">
+                        <input type="text" v-model="searchQuery" placeholder="Buscar casos..." class="search-input">
+                    </div>
+                    <button @click="showNewCaseModal" class="btn primary new-case-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 6V18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M6 12H18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Nuevo Caso
+                    </button>
+                    <div class="cases-list">
+                        <div 
+                            v-for="caso in filteredCases" 
+                            :key="caso.id" 
+                            class="case-item"
+                            :class="{ active: selectedCase && selectedCase.id === caso.id }"
+                            @click="selectCase(caso)">
+                            <div class="case-item-header">
+                                <span class="case-id">#{{ caso.id }}</span>
+                                <span class="case-date">{{ formatDate(caso.fechaCreacion) }}</span>
+                            </div>
+                            <div class="case-title">{{ caso.titulo }}</div>
+                            <div class="case-preview">{{ truncateText(caso.descripcion, 80) }}</div>
+                        </div>
+                        <div v-if="filteredCases.length === 0" class="no-cases">
+                            No se encontraron casos
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="content-area">
+                    <div v-if="selectedCase" class="case-detail">
+                        <div class="case-detail-header">
+                            <div class="case-header-info">
+                                <h2>{{ selectedCase.titulo }}</h2>
+                                <span class="status-badge header-status" :class="selectedCase.estado">
+                                    {{ selectedCase.estado }}
+                                </span>
+                            </div>
+                            <div class="case-actions">
+                                <button @click="closeCase" class="btn primary" :disabled="selectedCase.estado === 'cerrado'">Cerrar Caso</button>
+                                <button @click="editCase" class="btn secondary" :disabled="selectedCase.estado === 'cerrado'">Editar</button>
+                                <button @click="confirmDeleteCase" class="btn danger" :disabled="selectedCase.estado === 'cerrado'">Eliminar</button>
+                            </div>
+                        </div>
+                        
+                        <div class="case-info">
+                            <div class="info-group">
+                                <h3>Información del Caso</h3>
+                                <div class="info-row">
+                                    <span class="info-label">ID:</span>
+                                    <span class="info-value">{{ selectedCase.id }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Fecha de Creación:</span>
+                                    <span class="info-value">{{ formatDate(selectedCase.fechaCreacion) }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Estado:</span>
+                                    <span class="info-value status-badge" :class="selectedCase.estado">
+                                        {{ selectedCase.estado }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="info-group">
+                                <h3>Descripción</h3>
+                                <div class="description-box">{{ selectedCase.descripcion }}</div>
+                            </div>
+                            
+                            <div class="info-group">
+                                <h3>Referencias</h3>
+                                <div class="references-box">
+                                    <ul v-if="selectedCase.referencias && selectedCase.referencias.length">
+                                        <li v-for="(referencia, index) in selectedCase.referencias" :key="index">
+                                            {{ referencia }}
+                                        </li>
+                                    </ul>
+                                    <div v-else class="empty-list">No hay referencias asociadas</div>
+                                </div>
+                            </div>
+                            <div v-if="selectedCase.pendienteDeContacto" class="pending-contact-info">
+                                <span class="pending-contact-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2"/>
+                                    </svg>
+                                </span>
+                                <span>Pendiente de respuesta de: <strong>{{ selectedCase.pendienteDeContacto }}</strong></span>
+                            </div>
+                        </div>
+                        
+                        <div class="case-history">
+                            <div class="history-header">
+                                <h3>Historial de Pasos</h3>
+                                <button @click="showAddStepModal" class="btn primary" :disabled="selectedCase.estado === 'cerrado'">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 6V18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M6 12H18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                    Añadir Paso
+                                </button>
+                            </div>
+                            
+                            <div class="timeline">
+                                <div v-if="selectedCase.historial && selectedCase.historial.length" 
+                                     class="timeline-entries">
+                                    <div v-for="(paso, index) in selectedCase.historial" 
+                                         :key="index" 
+                                         class="timeline-entry">
+                                        <div class="timeline-marker"></div>
+                                        <div class="timeline-content">
+                                            <div class="timeline-date">
+                                                {{ formatDate(paso.fecha) }}
+                                                <span v-if="paso.lastEdited" class="edited-label"> (editado: {{ formatDate(paso.lastEdited) }})</span>
+                                            </div>
+                                            <div class="timeline-header">
+                                                <div class="timeline-title">{{ paso.titulo }}</div>
+                                                <div v-if="!paso.isSystemAction" class="timeline-actions">
+                                                    <button @click="editStep(index)" class="btn-icon" title="Editar paso" :disabled="selectedCase.estado === 'cerrado'">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M11 4H4C2.89543 4 2 4.89543 2 6V20C2 21.1046 2.89543 22 4 22H18C19.1046 22 20 21.1046 20 20V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                            <path d="M18.5 2.50001C19.3284 1.67158 20.6716 1.67158 21.5 2.50001C22.3284 3.32844 22.3284 4.67157 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                        </svg>
+                                                    </button>
+                                                    <button @click="confirmDeleteStep(index)" class="btn-icon remove" title="Eliminar paso" :disabled="selectedCase.estado === 'cerrado'">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                                            <path d="M18 18L6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="timeline-description">{{ paso.descripcion }}</div>
+                                            
+                                            <!-- Attachments section -->
+                                            <div v-if="paso.pendienteDeContacto" class="pending-contact-info">
+                                                <span class="pending-contact-icon">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2"/>
+                                                    </svg>
+                                                </span>
+                                                <span>Pendiente de respuesta de: <strong>{{ paso.pendienteDeContacto }}</strong></span>
+                                            </div>
+                                            <div v-if="paso.adjuntos && paso.adjuntos.length" class="timeline-attachments">
+                                                <div class="attachment-list">
+                                                    <div v-for="(adjunto, idx) in paso.adjuntos" 
+                                                         :key="idx" 
+                                                         class="attachment-item"
+                                                         @click="viewAttachment(adjunto)">
+                                                        <span class="attachment-icon" v-html="getFileIcon(adjunto.tipo)"></span>
+                                                        {{ adjunto.nombre }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div v-else class="no-history">
+                                    No hay pasos registrados para este caso
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div v-else class="no-selection">
+                        <div class="empty-state">
+                            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 7V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V7" stroke="currentColor" stroke-width="2"/>
+                                <path d="M16 7L18 5C19.1046 5 20 5.89543 20 7V19C20 20.1046 19.1046 21 18 21H6C4.89543 21 4 20.1046 4 19V7" stroke="currentColor" stroke-width="2"/>
+                                <path d="M2 7H22" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            <h3>Seleccione un caso para ver los detalles</h3>
+                            <button @click="showNewCaseModal" class="btn primary">Crear Nuevo Caso</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modal para nuevo caso o edición -->
+        <div v-if="showModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>{{ modalTitle }}</h2>
+                    <button class="close-btn" @click="closeModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form @submit.prevent="saveCase">
+                        <div class="form-group">
+                            <label for="caseTitle">Título del Caso</label>
+                            <input type="text" id="caseTitle" v-model="caseForm.titulo" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="caseDescription">Descripción</label>
+                            <textarea id="caseDescription" v-model="caseForm.descripcion" rows="5" required></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="caseStatus">Estado</label>
+                            <select id="caseStatus" v-model="caseForm.estado">
+                                <option value="abierto">Abierto</option>
+                                <option value="en-proceso">En Proceso</option>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="resuelto">Resuelto</option>
+                                <option value="cerrado">Cerrado</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Referencias</label>
+                            <div class="references-inputs">
+                                <div v-for="(ref, index) in caseForm.referencias" :key="index" class="reference-item">
+                                    <input type="text" v-model="caseForm.referencias[index]">
+                                    <button type="button" @click="removeReference(index)" class="btn-icon remove">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                            <path d="M18 18L6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <button type="button" @click="addReference" class="btn-add">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 6V18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M6 12H18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                    Añadir Referencia
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="pendingContact">Pendiente de contacto externo</label>
+                            <input type="text" id="pendingContact" v-model="caseForm.pendienteDeContacto" placeholder="Nombre o correo de la persona...">
+                            <div class="hint">Deje en blanco si no está esperando respuesta de alguien.</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn primary" @click="saveCase">Guardar</button>
+                    <button class="btn secondary" @click="closeModal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal para añadir paso -->
+        <div v-if="showStepModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Añadir Nuevo Paso</h2>
+                    <button class="close-btn" @click="closeStepModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form @submit.prevent="saveStep">
+                        <div class="form-group">
+                            <label for="stepTitle">Título del Paso</label>
+                            <input type="text" id="stepTitle" v-model="stepForm.titulo" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="stepDescription">Descripción</label>
+                            <textarea id="stepDescription" v-model="stepForm.descripcion" rows="4" required></textarea>
+                        </div>
+                        
+                        <!-- Added file upload section -->
+                        <div class="form-group">
+                            <label>Archivos Adjuntos</label>
+                            <div class="attachment-upload">
+                                <div class="file-input-container">
+                                    <button type="button" class="btn secondary">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                            <path d="M7 8L12 3L17 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                            <path d="M20 21H4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                            <path d="M4 15H20V18C20 19.6569 18.6569 21 17 21H7C5.34315 21 4 19.6569 4 18V15Z" stroke="currentColor" stroke-width="2"/>
+                                        </svg>
+                                        Seleccionar Archivos
+                                    </button>
+                                    <input type="file" @change="handleFileUpload" multiple>
+                                </div>
+                            </div>
+                            <div v-if="attachmentFiles.length > 0" class="file-preview">
+                                <div v-for="(file, index) in attachmentFiles" :key="index" class="file-item">
+                                    <div>
+                                        <span v-html="getFileIcon(file.type)"></span>
+                                        {{ file.name }} ({{ formatFileSize(file.size) }})
+                                    </div>
+                                    <button type="button" @click="removeAttachment(index)" class="btn-icon remove">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                            <path d="M18 18L6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="stepPendingContact">Pendiente de contacto externo</label>
+                            <input type="text" id="stepPendingContact" v-model="stepForm.pendienteDeContacto" placeholder="Nombre o correo de la persona...">
+                            <div class="hint">Deje en blanco si no está esperando respuesta de alguien.</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn primary" @click="saveStep">Guardar</button>
+                    <button class="btn secondary" @click="closeStepModal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal de confirmación de eliminación -->
+        <div v-if="showDeleteModal" class="modal">
+            <div class="modal-content delete-modal">
+                <div class="modal-header">
+                    <h2>Confirmar Eliminación</h2>
+                    <button class="close-btn" @click="closeDeleteModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro que desea eliminar el caso <strong>{{ selectedCase?.titulo }}</strong>?</p>
+                    <p class="warning">Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn danger" @click="deleteCase">Eliminar</button>
+                    <button class="btn secondary" @click="closeDeleteModal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal para el cierre de caso con evidencias -->
+        <div v-if="showCloseCaseModal" class="modal">
+            <div class="modal-content close-case-modal">
+                <div class="modal-header">
+                    <h2>Cerrar Caso con Evidencias</h2>
+                    <button class="close-btn" @click="closeCloseCaseModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Está a punto de cerrar el caso <strong>{{ selectedCase?.titulo }}</strong>.</p>
+                    <p>Por favor adjunte las evidencias necesarias para cerrar este caso.</p>
+                    
+                    <div class="form-group">
+                        <label>Evidencias de Cierre</label>
+                        <div class="attachment-upload">
+                            <div class="file-input-container">
+                                <button type="button" class="btn secondary">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M7 8L12 3L17 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M20 21H4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M4 15H20V18C20 19.6569 18.6569 21 17 21H7C5.34315 21 4 19.6569 4 18V15Z" stroke="currentColor" stroke-width="2"/>
+                                    </svg>
+                                    Seleccionar Archivos
+                                </button>
+                                <input type="file" @change="handleCloseCaseFileUpload" multiple>
+                            </div>
+                        </div>
+                        <div v-if="closeCaseFiles.length > 0" class="file-preview">
+                            <div v-for="(file, index) in closeCaseFiles" :key="index" class="file-item">
+                                <div>
+                                    <span v-html="getFileIcon(file.type)"></span>
+                                    {{ file.name }} ({{ formatFileSize(file.size) }})
+                                </div>
+                                <button type="button" @click="removeCloseCaseFile(index)" class="btn-icon remove">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M18 18L6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p class="warning">Una vez cerrado, el estado del caso será definitivo.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn primary" @click="confirmCloseCase">Cerrar Caso</button>
+                    <button class="btn secondary" @click="closeCloseCaseModal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Notificación de Toast -->
+        <div v-if="notification.show" class="toast" :class="notification.type">
+            <div class="toast-content">
+                <svg v-if="notification.type === 'success'" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 11.0857V12.0057C22 14.1621 21.3005 16.2604 20.0093 17.9875C18.7182 19.7147 16.9033 20.9782 14.8354 21.5896C12.7674 22.201 10.5573 22.1276 8.53447 21.3803C6.51168 20.633 4.78465 19.2518 3.61096 17.4428C2.43727 15.6338 1.87979 13.4938 2.02168 11.342C2.16356 9.19029 2.99721 7.14205 4.39828 5.5028C5.79935 3.86354 7.69279 2.72111 9.79619 2.24587C11.8996 1.77063 14.1003 1.98806 16.07 2.86572" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M22 4L12 14.01L9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <svg v-if="notification.type === 'error'" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 8V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M12 16.01L12.01 15.9989" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                <div class="toast-message">{{ notification.message }}</div>
+            </div>
+            <div class="toast-progress" :style="{ width: notification.progress + '%' }"></div>
+        </div>
+        
+        <!-- File Viewer Modal -->
+        <div v-if="showFileViewerModal" class="modal file-viewer-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>{{ currentViewingFile?.nombre }}</h2>
+                    <button class="close-btn" @click="closeFileViewer">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="file-viewer-content">
+                        <!-- Image viewer -->
+                        <img v-if="currentViewingFile && currentViewingFile.tipo.includes('image')" 
+                             :src="currentViewingFile.data" 
+                             :alt="currentViewingFile.nombre">
+                        
+                        <!-- PDF viewer -->
+                        <iframe v-else-if="currentViewingFile && currentViewingFile.tipo.includes('pdf')"
+                                :src="currentViewingFile.data"
+                                frameborder="0"
+                                width="100%"
+                                height="500px"></iframe>
+                        
+                        <!-- Document download prompt -->
+                        <div v-else-if="currentViewingFile" class="download-prompt">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 7V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V8L14 2H6C4.89543 2 4 2.89543 4 4Z" stroke="currentColor" stroke-width="2"/>
+                                <path d="M14 2V8H20" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            <h3>El archivo no se puede previsualizar</h3>
+                            <p>Puede descargar el archivo utilizando el siguiente enlace:</p>
+                            <a :href="currentViewingFile.data" :download="currentViewingFile.nombre" class="btn primary">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M20 21H4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                                Descargar Archivo
+                            </a>
+                        </div>
+                        
+                        <!-- Fallback for no file -->
+                        <div v-else class="unsupported-file">
+                            Error al cargar el archivo
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn secondary" @click="closeFileViewer">Cerrar</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal para editar paso -->
+        <div v-if="showEditStepModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Editar Paso</h2>
+                    <button class="close-btn" @click="closeEditStepModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form @submit.prevent="updateStep">
+                        <div class="form-group">
+                            <label for="editStepTitle">Título del Paso</label>
+                            <input type="text" id="editStepTitle" v-model="stepForm.titulo" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editStepDescription">Descripción</label>
+                            <textarea id="editStepDescription" v-model="stepForm.descripcion" rows="4" required></textarea>
+                        </div>
+                        
+                        <!-- File upload section -->
+                        <div class="form-group">
+                            <label>Archivos Adjuntos</label>
+                            <div class="attachment-upload">
+                                <div class="file-input-container">
+                                    <button type="button" class="btn secondary">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                            <path d="M7 8L12 3L17 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                            <path d="M20 21H4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                            <path d="M4 15H20V18C20 19.6569 18.6569 21 17 21H7C5.34315 21 4 19.6569 4 18V15Z" stroke="currentColor" stroke-width="2"/>
+                                        </svg>
+                                        Seleccionar Archivos
+                                    </button>
+                                    <input type="file" @change="handleFileUpload" multiple>
+                                </div>
+                            </div>
+                            <div v-if="attachmentFiles.length > 0" class="file-preview">
+                                <div v-for="(file, index) in attachmentFiles" :key="index" class="file-item">
+                                    <div>
+                                        <span v-html="getFileIcon(file.tipo || file.type)"></span>
+                                        {{ file.nombre || file.name }} ({{ formatFileSize(file.tamano || file.size) }})
+                                    </div>
+                                    <button type="button" @click="removeAttachment(index)" class="btn-icon remove">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                            <path d="M18 18L6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn primary" @click="updateStep">Guardar Cambios</button>
+                    <button class="btn secondary" @click="closeEditStepModal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal de confirmación de eliminación de paso -->
+        <div v-if="showDeleteStepModal" class="modal">
+            <div class="modal-content delete-modal">
+                <div class="modal-header">
+                    <h2>Confirmar Eliminación de Paso</h2>
+                    <button class="close-btn" @click="closeDeleteStepModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro que desea eliminar este paso?</p>
+                    <p class="warning">Esta acción no se puede deshacer, pero se registrará como una acción en el historial.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn danger" @click="deleteStep">Eliminar</button>
+                    <button class="btn secondary" @click="closeDeleteStepModal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
