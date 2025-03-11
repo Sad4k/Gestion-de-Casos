@@ -20,7 +20,8 @@ body {
     margin: 0;
     font-family: 'Inter', sans-serif;
     background-color: var(--background-color);
-    color: var(--text-color);
+    color: var(--text-color); 
+    font-size: 10px;
     line-height: 1.5;
 }
 
