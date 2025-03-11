@@ -280,6 +280,16 @@
                             <div class="case-actions">
                                 <button @click="closeCase" class="btn primary" :disabled="selectedCase.estado === 'cerrado'">Cerrar Caso</button>
                                 <button @click="editCase" class="btn secondary" :disabled="selectedCase.estado === 'cerrado'">Editar</button>
+                                <button v-if="isCaseOwner" @click="openShareModal" class="btn secondary">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M18 8C19.1046 8 20 7.10457 20 6C20 4.89543 19.1046 4 18 4C16.8954 4 16 4.89543 16 6C16 7.10457 16.8954 8 18 8Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M6 12C7.10457 12 8 11.1046 8 10C8 8.89543 7.10457 8 6 8C4.89543 8 4 8.89543 4 10C4 11.1046 4.89543 12 6 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M18 4L8.12 9.94" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M8.12 14.06L18 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M18 14C19.1046 14 20 13.1046 20 12C20 10.8954 19.1046 10 18 10C16.8954 10 16 10.8954 16 12C16 13.1046 16.8954 14 18 14Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    Compartir
+                                </button>
                                 <button @click="confirmDeleteCase" class="btn danger" :disabled="selectedCase.estado === 'cerrado'">Eliminar</button>
                             </div>
                         </div>
@@ -800,6 +810,27 @@
                 <div class="modal-footer">
                     <button class="btn danger" @click="resetAllData">Restablecer</button>
                     <button class="btn secondary" @click="closeResetConfirmModal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal para compartir caso -->
+        <div v-if="showShareModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Compartir Caso</h2>
+                    <button class="close-btn" @click="closeShareModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="shareEmail">Correo del usuario para compartir</label>
+                        <input type="text" id="shareEmail" v-model="shareEmail" placeholder="usuario@ejemplo.com">
+                        <div v-if="shareError" class="error-message">{{ shareError }}</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn primary" @click="shareCase">Compartir</button>
+                    <button class="btn secondary" @click="closeShareModal">Cancelar</button>
                 </div>
             </div>
         </div>
