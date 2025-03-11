@@ -661,7 +661,7 @@ button:disabled {
 
 .btn.primary {
     background: var(--primary-color);
-    color: #2f2f2f;
+    color: #2f2f2f !important;
 }
 
 .btn.primary:hover {
@@ -669,9 +669,9 @@ button:disabled {
 }
 
 .btn.secondary {
-    background: #2f2f2f;
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
+    border: solid 1px #3652cc;
+    background: #3652cc;
+    color: #f2f2f2;
 }
 
 .btn.secondary:hover {
