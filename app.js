@@ -1,10 +1,10 @@
 import { createApp, ref, computed, onMounted } from 'vue';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, setDoc } from 'firebase/firestore';
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDF0fwRZJUQfI1x0V16zmsmw6Jbe2p06jw",
+   apiKey: "AIzaSyDF0fwRZJUQfI1x0V16zmsmw6Jbe2p06jw",
   authDomain: "personal-apps-db.firebaseapp.com",
   projectId: "personal-apps-db",
   storageBucket: "personal-apps-db.firebasestorage.app",
@@ -64,11 +64,23 @@ createApp({
     });
 
     const loadCases = async () => {
-      const snapshot = await getDocs(collection(db, "casos"));
-      casos.value = snapshot.docs.map(docSnap => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      const userId = currentUser.uid;
+      const casosCollection = collection(db, "casos");
+      const ownerQuery = query(casosCollection, where("owner", "==", userId));
+      const sharedQuery = query(casosCollection, where("sharedWith", "array-contains", userId));
+      const [ownerSnap, sharedSnap] = await Promise.all([getDocs(ownerQuery), getDocs(sharedQuery)]);
+      let casesMap = {};
+      ownerSnap.forEach(docSnap => {
         const data = docSnap.data();
-        return { ...data, docId: docSnap.id, id: data.id || docSnap.id };
+        casesMap[docSnap.id] = { ...data, docId: docSnap.id, id: data.id || docSnap.id };
       });
+      sharedSnap.forEach(docSnap => {
+        const data = docSnap.data();
+        casesMap[docSnap.id] = { ...data, docId: docSnap.id, id: data.id || docSnap.id };
+      });
+      casos.value = Object.values(casesMap);
     };
 
     const updateCaseInFirebase = async (updatedCase) => {
@@ -101,6 +113,8 @@ createApp({
       onAuthStateChanged(auth, (user) => {
         if (user) {
           isAuthenticated.value = true;
+          const userRef = doc(db, "users", user.uid);
+          setDoc(userRef, { email: user.email, displayName: user.displayName || user.email }, { merge: true });
           loadCases();
         } else {
           isAuthenticated.value = false;
@@ -223,7 +237,9 @@ createApp({
             titulo: 'Caso abierto',
             descripcion: 'Se inició el caso en el sistema.',
             fecha: new Date().toISOString()
-          }]
+          }],
+          owner: auth.currentUser.uid,
+          sharedWith: []
         };
         const docRef = await addDoc(collection(db, "casos"), newCase);
         newCase.id = docRef.id;
@@ -567,6 +583,48 @@ createApp({
       closeConfigModal();
     };
 
+    const shareEmail = ref('');
+    const shareError = ref('');
+    const showShareModal = ref(false);
+    const isCaseOwner = computed(() => {
+      return selectedCase.value && auth.currentUser && selectedCase.value.owner === auth.currentUser.uid;
+    });
+
+    const openShareModal = () => {
+      shareEmail.value = '';
+      shareError.value = '';
+      showShareModal.value = true;
+    };
+    const closeShareModal = () => {
+      showShareModal.value = false;
+    };
+    const shareCase = async () => {
+      if (!selectedCase.value) return;
+      if (!shareEmail.value.trim()) {
+        shareError.value = "Ingrese un correo válido";
+        return;
+      }
+      const usersCollection = collection(db, "users");
+      const userQuery = query(usersCollection, where("email", "==", shareEmail.value.trim()));
+      const snapshot = await getDocs(userQuery);
+      if (snapshot.empty) {
+        shareError.value = "Usuario no encontrado";
+        return;
+      }
+      const targetUid = snapshot.docs[0].id;
+      if (!selectedCase.value.sharedWith) {
+        selectedCase.value.sharedWith = [];
+      }
+      if (selectedCase.value.sharedWith.includes(targetUid)) {
+        shareError.value = "El caso ya ha sido compartido con este usuario";
+        return;
+      }
+      selectedCase.value.sharedWith.push(targetUid);
+      await updateCaseInFirebase(selectedCase.value);
+      showNotification('success', 'Caso compartido correctamente');
+      showShareModal.value = false;
+    };
+
     return {
       isAuthenticated, loginForm, errorLogin, login, logout,
       casos, selectedCase, searchQuery, filteredCases, showModal, showStepModal,
@@ -581,7 +639,8 @@ createApp({
       viewAttachment, closeFileViewer, formatFileSize, getFileIcon, addReference, removeReference,
       navigateTo, closeModal, closeStepModal, closeDeleteModal, closeEditStepModal, closeDeleteStepModal,
       formatDate, truncateText, showNotification,
-      openConfigModal, closeConfigModal, openResetConfirmModal, closeResetConfirmModal, resetAllData
+      openConfigModal, closeConfigModal, openResetConfirmModal, closeResetConfirmModal, resetAllData,
+      shareEmail, shareError, showShareModal, openShareModal, closeShareModal, shareCase, isCaseOwner
     };
   }
 }).mount('#app');
