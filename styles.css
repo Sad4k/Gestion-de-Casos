@@ -664,6 +664,43 @@ main {
     margin-top: 1rem;
 }
 
+.status-group {
+    margin-bottom: 1rem;
+}
+
+.status-separator {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+}
+
+.status-separator .group-count {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    background: rgba(0,0,0,0.05);
+    padding: 0.2rem 0.5rem;
+    border-radius: 1rem;
+}
+
+.status-separator .collapse-icon {
+    transition: transform 0.3s ease;
+}
+
+.status-separator.collapsed .collapse-icon {
+    transform: rotate(-90deg);
+}
+
+.status-group-content {
+    transition: max-height 0.3s ease;
+    overflow: hidden;
+}
+
+.status-group-content.collapsed {
+    max-height: 0 !important;
+}
+
 /* Buttons */
 button:disabled {
     opacity: 0.5;
