@@ -123,44 +123,23 @@ createApp({
     });
 
     const filteredCases = computed(() => {
+      let cases = [];
+      
       if (!searchQuery.value.trim()) {
-        const groupedCases = {
-          abierto: [],
-          'en-proceso': [],
-          pendiente: [],
-          resuelto: [],
-          cerrado: []
-        };
-
-        casos.value.forEach(caso => {
-          if (groupedCases.hasOwnProperty(caso.estado)) {
-            groupedCases[caso.estado].push(caso);
-          }
-        });
-
-        Object.keys(groupedCases).forEach(status => {
-          groupedCases[status].sort((a, b) => 
-            new Date(b.fechaCreacion) - new Date(a.fechaCreacion)
-          );
-        });
-
-        return [
-          ...groupedCases.abierto,
-          ...groupedCases['en-proceso'],
-          ...groupedCases.pendiente,
-          ...groupedCases.resuelto,
-          ...groupedCases.cerrado
-        ];
+        cases = [...casos.value];
+      } else {
+        const query = searchQuery.value.toLowerCase();
+        cases = casos.value.filter(caso => 
+          caso.titulo.toLowerCase().includes(query) || 
+          caso.descripcion.toLowerCase().includes(query) ||
+          caso.id.toString().includes(query)
+        );
       }
 
-      const query = searchQuery.value.toLowerCase();
-      const filtered = casos.value.filter(caso => 
-        caso.titulo.toLowerCase().includes(query) || 
-        caso.descripcion.toLowerCase().includes(query) ||
-        caso.id.toString().includes(query)
-      );
+      // Sort cases by date (newest first) and then group by status
+      cases.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion));
 
-      const groupedFiltered = {
+      const groupedCases = {
         abierto: [],
         'en-proceso': [],
         pendiente: [],
@@ -168,26 +147,26 @@ createApp({
         cerrado: []
       };
 
-      filtered.forEach(caso => {
-        if (groupedFiltered.hasOwnProperty(caso.estado)) {
-          groupedFiltered[caso.estado].push(caso);
+      cases.forEach(caso => {
+        if (groupedCases.hasOwnProperty(caso.estado)) {
+          groupedCases[caso.estado].push(caso);
         }
       });
 
-      Object.keys(groupedFiltered).forEach(status => {
-        groupedFiltered[status].sort((a, b) => 
-          new Date(b.fechaCreacion) - new Date(a.fechaCreacion)
-        );
-      });
-
-      return [
-        ...groupedFiltered.abierto,
-        ...groupedFiltered['en-proceso'],
-        ...groupedFiltered.pendiente,
-        ...groupedFiltered.resuelto,
-        ...groupedFiltered.cerrado
-      ];
+      return groupedCases;
     });
+
+    const collapsedGroups = ref({
+      abierto: false,
+      'en-proceso': false,
+      pendiente: false,
+      resuelto: false,
+      cerrado: false
+    });
+
+    const toggleGroup = (status) => {
+      collapsedGroups.value[status] = !collapsedGroups.value[status];
+    };
 
     const dashboardStats = computed(() => {
       const total = casos.value.length;
@@ -199,45 +178,53 @@ createApp({
       for (const status in byStatus) {
         percentages[status] = total > 0 ? (byStatus[status] / total) * 100 : 0;
       }
-      const recentCases = [...casos.value]
+      // Modified to exclude closed cases
+      const recentCases = casos.value
+        .filter(caso => caso.estado !== 'cerrado')
         .sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
         .slice(0, 5);
+      
       const pendingContactsByPerson = {};
       casos.value.forEach(caso => {
-        if (caso.pendienteDeContacto && caso.pendienteDeContacto.trim() !== '') {
-          if (!pendingContactsByPerson[caso.pendienteDeContacto]) {
-            pendingContactsByPerson[caso.pendienteDeContacto] = [];
-          }
-          pendingContactsByPerson[caso.pendienteDeContacto].push({
-            id: caso.id,
-            titulo: caso.titulo,
-            descripcion: caso.descripcion,
-            estado: caso.estado,
-            fromMainCase: true
-          });
-        }
-        if (caso.historial && caso.historial.length) {
-          caso.historial.forEach(step => {
-            if (step.pendienteDeContacto && step.pendienteDeContacto.trim() !== '') {
-              if (!pendingContactsByPerson[step.pendienteDeContacto]) {
-                pendingContactsByPerson[step.pendienteDeContacto] = [];
-              }
-              const existingCase = pendingContactsByPerson[step.pendienteDeContacto]
-                .find(c => c.id === caso.id && c.stepTitle === step.titulo);
-              if (!existingCase) {
-                pendingContactsByPerson[step.pendienteDeContacto].push({
-                  id: caso.id,
-                  titulo: caso.titulo,
-                  descripcion: caso.descripcion,
-                  estado: caso.estado,
-                  stepTitle: step.titulo,
-                  stepDescription: step.descripcion
-                });
-              }
+        // Only include pending contacts for non-closed cases
+        if (caso.estado !== 'cerrado') {
+          if (caso.pendienteDeContacto && caso.pendienteDeContacto.trim() !== '') {
+            if (!pendingContactsByPerson[caso.pendienteDeContacto]) {
+              pendingContactsByPerson[caso.pendienteDeContacto] = [];
             }
-          });
+            pendingContactsByPerson[caso.pendienteDeContacto].push({
+              id: caso.id,
+              titulo: caso.titulo,
+              descripcion: caso.descripcion,
+              estado: caso.estado,
+              fromMainCase: true
+            });
+          }
+          if (caso.historial && caso.historial.length) {
+            caso.historial.forEach(step => {
+              if (step.pendienteDeContacto && step.pendienteDeContacto.trim() !== '') {
+                if (!pendingContactsByPerson[step.pendienteDeContacto]) {
+                  pendingContactsByPerson[step.pendienteDeContacto] = [];
+                }
+                const existingCase = pendingContactsByPerson[step.pendienteDeContacto]
+                  .find(c => c.id === caso.id && c.stepTitle === step.titulo);
+                if (!existingCase) {
+                  pendingContactsByPerson[step.pendienteDeContacto].push({
+                    id: caso.id,
+                    titulo: caso.titulo,
+                    descripcion: caso.descripcion,
+                    estado: caso.estado,
+                    stepTitle: step.titulo,
+                    stepDescription: step.descripcion
+                  });
+                }
+              }
+            });
+          }
         }
       });
+      
+      // ... rest of dashboardStats code ...
       const pendingContactsArray = Object.keys(pendingContactsByPerson).map(person => ({
         person,
         cases: pendingContactsByPerson[person]
@@ -687,6 +674,252 @@ createApp({
       showShareModal.value = false;
     };
 
+    const showPrintOptionsModal = ref(false);
+    const printOptions = ref({
+      status: 'all', // 'all', 'open', 'closed'
+      mode: 'expanded' // 'expanded', 'compact'
+    });
+
+    const openPrintOptions = (type = 'single') => {
+      printOptions.value = {
+        status: 'all',
+        mode: 'expanded',
+        type // 'single' or 'all'
+      };
+      showPrintOptionsModal.value = true;
+    };
+
+    const executePrint = () => {
+      if (printOptions.value.type === 'single') {
+        printSingleCase();
+      } else {
+        printAllCases();
+      }
+      showPrintOptionsModal.value = false;
+    };
+
+    const closePrintOptionsModal = () => {
+      showPrintOptionsModal.value = false;
+    };
+
+    const printSingleCase = () => {
+      if (!selectedCase.value) return;
+      
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Caso: ${selectedCase.value.titulo}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              .header { margin-bottom: 20px; }
+              .section { margin-bottom: 15px; }
+              .section-title { font-weight: bold; margin-bottom: 5px; }
+              .timeline-entry { margin-bottom: 10px; padding-left: 20px; border-left: 2px solid #ccc; }
+              .timeline-date { color: #666; font-size: 0.9em; }
+              .printed-case-info { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; }
+              .printed-case-info > div { flex: 1; min-width: 250px; }
+              .printed-image { max-width: 300px; margin: 10px 0; page-break-inside: avoid; }
+              .print-section { margin-bottom: 1.5rem; }
+              .print-section-title { font-weight: bold; margin-bottom: 0.5rem; color: #333; }
+              img { max-width: 100%; display: block; margin: 10px 0; }
+              ${printOptions.value.mode === 'compact' ? `
+                .timeline-entry { padding-left: 10px; margin-bottom: 5px; }
+                .timeline-description { display: none; }
+                .printed-image { display: none; }
+              ` : ''}
+              @media print {
+                body { font-size: 12px; }
+                .header { font-size: 14px; }
+                .printed-image { max-width: 200px; }
+                .timeline-entry { page-break-inside: avoid; }
+                img { page-break-inside: avoid; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>${selectedCase.value.titulo}</h1>
+            </div>
+            
+            <div class="printed-case-info">
+              <div class="print-section">
+                <div class="print-section-title">Estado</div>
+                <p>${selectedCase.value.estado}</p>
+              </div>
+              
+              <div class="print-section">
+                <div class="print-section-title">Fecha de Creación</div>
+                <p>${formatDate(selectedCase.value.fechaCreacion)}</p>
+              </div>
+              
+              <div class="print-section">
+                <div class="print-section-title">Descripción</div>
+                <p>${selectedCase.value.descripcion}</p>
+              </div>
+              
+              ${selectedCase.value.referencias && selectedCase.value.referencias.length ? `
+                <div class="print-section">
+                  <div class="print-section-title">Referencias</div>
+                  <ul>
+                    ${selectedCase.value.referencias.map(ref => `<li>${ref}</li>`).join('')}
+                  </ul>
+                </div>
+              ` : ''}
+            </div>
+            
+            ${selectedCase.value.historial && selectedCase.value.historial.length ? `
+              <div class="section">
+                <div class="section-title">Historial</div>
+                ${selectedCase.value.historial.map(paso => `
+                  <div class="timeline-entry">
+                    <div class="timeline-date">${formatDate(paso.fecha)}</div>
+                    <strong>${paso.titulo}</strong>
+                    <p>${paso.descripcion}</p>
+                    ${printOptions.value.mode === 'expanded' && paso.adjuntos ? 
+                      paso.adjuntos.map(adj => 
+                        adj.tipo.startsWith('image/') ? 
+                        `<img class="printed-image" src="${adj.data}" alt="${adj.nombre}">` : 
+                        ''
+                      ).join('') : ''
+                    }
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    };
+
+    const printAllCases = () => {
+      const printWindow = window.open('', '_blank');
+      
+      // Filter cases based on status option
+      let filteredCases = [...casos.value];
+      if (printOptions.value.status === 'open') {
+        filteredCases = filteredCases.filter(caso => caso.estado !== 'cerrado');
+      } else if (printOptions.value.status === 'closed') {
+        filteredCases = filteredCases.filter(caso => caso.estado === 'cerrado');
+      }
+      
+      filteredCases.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion));
+      
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Todos los Casos</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              .case { 
+                margin-bottom: 40px; 
+                padding-bottom: 20px;
+                border-bottom: 1px solid #ccc;
+              }
+              .header { margin-bottom: 20px; }
+              .section { margin-bottom: 15px; }
+              .section-title { font-weight: bold; margin-bottom: 5px; }
+              .timeline-entry { margin-bottom: 10px; padding-left: 20px; border-left: 2px solid #ccc; }
+              .timeline-date { color: #666; font-size: 0.9em; }
+              .status-badge {
+                display: inline-block;
+                padding: 4px 8px;
+                border-radius: 12px;
+                font-size: 12px;
+                font-weight: bold;
+              }
+              .abierto { background-color: #d1fae5; color: #065f46; }
+              .en-proceso { background-color: #e0f2fe; color: #0c4a6e; }
+              .pendiente { background-color: #fef3c7; color: #92400e; }
+              .resuelto { background-color: #ddd6fe; color: #5b21b6; }
+              .cerrado { background-color: #e5e7eb; color: #1f2937; }
+              ${printOptions.value.mode === 'compact' ? `
+                .case { margin-bottom: 20px; padding-bottom: 10px; }
+                .timeline-entry { display: none; }
+                .description { display: none; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+              ` : ''}
+              @media print {
+                body { font-size: 12px; }
+                .header { font-size: 14px; }
+                .case { page-break-inside: avoid; }
+              }
+            </style>
+          </head>
+          <body>
+            <h1>Reporte de Casos - ${new Date().toLocaleDateString()}</h1>
+            ${printOptions.value.mode === 'compact' ? `
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Título</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${filteredCases.map(caso => `
+                    <tr>
+                      <td>${caso.id}</td>
+                      <td>${caso.titulo}</td>
+                      <td><span class="status-badge ${caso.estado}">${caso.estado}</span></td>
+                      <td>${formatDate(caso.fechaCreacion)}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            ` : `
+              ${filteredCases.map(caso => `
+                <div class="case">
+                  <div class="header">
+                    <h2>${caso.titulo}</h2>
+                    <p>ID: ${caso.id}</p>
+                    <p>Estado: <span class="status-badge ${caso.estado}">${caso.estado}</span></p>
+                    <p>Fecha de Creación: ${formatDate(caso.fechaCreacion)}</p>
+                  </div>
+                  
+                  <div class="section">
+                    <div class="section-title">Descripción</div>
+                    <p>${caso.descripcion}</p>
+                  </div>
+                  
+                  ${caso.referencias && caso.referencias.length ? `
+                    <div class="section">
+                      <div class="section-title">Referencias</div>
+                      <ul>
+                        ${caso.referencias.map(ref => `<li>${ref}</li>`).join('')}
+                      </ul>
+                    </div>
+                  ` : ''}
+                  
+                  ${caso.historial && caso.historial.length ? `
+                    <div class="section">
+                      <div class="section-title">Historial</div>
+                      ${caso.historial.map(paso => `
+                        <div class="timeline-entry">
+                          <div class="timeline-date">${formatDate(paso.fecha)}</div>
+                          <strong>${paso.titulo}</strong>
+                          <p>${paso.descripcion}</p>
+                        </div>
+                      `).join('')}
+                    </div>
+                  ` : ''}
+                </div>
+              `).join('')}
+            `}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    };
+
     return {
       isAuthenticated, loginForm, errorLogin, login, logout,
       casos, selectedCase, searchQuery, filteredCases, showModal, showStepModal,
@@ -702,7 +935,9 @@ createApp({
       navigateTo, closeModal, closeStepModal, closeDeleteModal, closeEditStepModal, closeDeleteStepModal,
       formatDate, truncateText, showNotification,
       openConfigModal, closeConfigModal, openResetConfirmModal, closeResetConfirmModal, resetAllData,
-      shareEmail, shareError, showShareModal, openShareModal, closeShareModal, shareCase, isCaseOwner
+      shareEmail, shareError, showShareModal, openShareModal, closeShareModal, shareCase, isCaseOwner,
+      collapsedGroups, toggleGroup,
+      showPrintOptionsModal, printOptions, openPrintOptions, executePrint, closePrintOptionsModal,
     };
   }
 }).mount('#app');
