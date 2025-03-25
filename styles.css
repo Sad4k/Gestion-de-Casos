@@ -117,6 +117,7 @@ main {
     font-size: 0.8rem;
     border-radius: var(--border-radius);
     margin-bottom: 0.3rem;
+    margin-left: 0.5rem;
     cursor: pointer;
     transition: background-color var(--transition-speed);
     border: 1px solid transparent;
@@ -644,6 +645,23 @@ main {
     color: var(--primary-color);
     font-style: italic;
     margin-top: 0.2rem;
+}
+
+/* Status separator */
+.status-separator {
+    padding: 0.5rem;
+    font-weight: 600;
+    color: var(--text-light);
+    background-color: #f8fafc;
+    border-radius: var(--border-radius);
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-separator:not(:first-child) {
+    margin-top: 1rem;
 }
 
 /* Buttons */
