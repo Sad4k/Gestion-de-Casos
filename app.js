@@ -4,7 +4,7 @@ import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, q
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
 
 const firebaseConfig = {
-   apiKey: "AIzaSyDF0fwRZJUQfI1x0V16zmsmw6Jbe2p06jw",
+  apiKey: "AIzaSyDF0fwRZJUQfI1x0V16zmsmw6Jbe2p06jw",
   authDomain: "personal-apps-db.firebaseapp.com",
   projectId: "personal-apps-db",
   storageBucket: "personal-apps-db.firebasestorage.app",
@@ -123,13 +123,70 @@ createApp({
     });
 
     const filteredCases = computed(() => {
-      if (!searchQuery.value.trim()) return casos.value;
+      if (!searchQuery.value.trim()) {
+        const groupedCases = {
+          abierto: [],
+          'en-proceso': [],
+          pendiente: [],
+          resuelto: [],
+          cerrado: []
+        };
+
+        casos.value.forEach(caso => {
+          if (groupedCases.hasOwnProperty(caso.estado)) {
+            groupedCases[caso.estado].push(caso);
+          }
+        });
+
+        Object.keys(groupedCases).forEach(status => {
+          groupedCases[status].sort((a, b) => 
+            new Date(b.fechaCreacion) - new Date(a.fechaCreacion)
+          );
+        });
+
+        return [
+          ...groupedCases.abierto,
+          ...groupedCases['en-proceso'],
+          ...groupedCases.pendiente,
+          ...groupedCases.resuelto,
+          ...groupedCases.cerrado
+        ];
+      }
+
       const query = searchQuery.value.toLowerCase();
-      return casos.value.filter(caso => 
+      const filtered = casos.value.filter(caso => 
         caso.titulo.toLowerCase().includes(query) || 
         caso.descripcion.toLowerCase().includes(query) ||
         caso.id.toString().includes(query)
       );
+
+      const groupedFiltered = {
+        abierto: [],
+        'en-proceso': [],
+        pendiente: [],
+        resuelto: [],
+        cerrado: []
+      };
+
+      filtered.forEach(caso => {
+        if (groupedFiltered.hasOwnProperty(caso.estado)) {
+          groupedFiltered[caso.estado].push(caso);
+        }
+      });
+
+      Object.keys(groupedFiltered).forEach(status => {
+        groupedFiltered[status].sort((a, b) => 
+          new Date(b.fechaCreacion) - new Date(a.fechaCreacion)
+        );
+      });
+
+      return [
+        ...groupedFiltered.abierto,
+        ...groupedFiltered['en-proceso'],
+        ...groupedFiltered.pendiente,
+        ...groupedFiltered.resuelto,
+        ...groupedFiltered.cerrado
+      ];
     });
 
     const dashboardStats = computed(() => {
@@ -553,6 +610,11 @@ createApp({
           data: file.data
         }));
         casos.value[index].estado = 'cerrado';
+        casos.value[index].historial = casos.value[index].historial.map(paso => ({
+          ...paso,
+          pendienteDeContacto: casos.value[index].estado === 'cerrado' ? '' : paso.pendienteDeContacto
+        }));
+
         if (!casos.value[index].historial) { casos.value[index].historial = []; }
         casos.value[index].historial.push({
           titulo: 'Caso cerrado',
