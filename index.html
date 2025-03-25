@@ -249,24 +249,40 @@
                         Nuevo Caso
                     </button>
                     <div class="cases-list">
-                        <template v-for="(caso, index) in filteredCases" :key="caso.id">
-                            <!-- Add status separator when status changes -->
-                            <div v-if="index === 0 || filteredCases[index-1].estado !== caso.estado" class="status-separator">
-                                {{ caso.estado.charAt(0).toUpperCase() + caso.estado.slice(1) }}
-                            </div>
-                            <div 
-                                class="case-item"
-                                :class="{ active: selectedCase && selectedCase.id === caso.id }"
-                                @click="selectCase(caso)">
-                                <div class="case-item-header">
-                                    <span class="case-id">#{{ caso.id }}</span>
-                                    <span class="case-date">{{ formatDate(caso.fechaCreacion) }}</span>
+                        <template v-for="status in ['abierto', 'en-proceso', 'pendiente', 'resuelto', 'cerrado']">
+                            <div v-if="filteredCases[status].length > 0" :key="status" class="status-group">
+                                <div class="status-separator" 
+                                     :class="{ collapsed: collapsedGroups[status] }"
+                                     @click="toggleGroup(status)">
+                                    <div class="status-title">
+                                        {{ status.charAt(0).toUpperCase() + status.slice(1) }}
+                                    </div>
+                                    <div class="group-info">
+                                        <span class="group-count">{{ filteredCases[status].length }}</span>
+                                        <svg class="collapse-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </div>
                                 </div>
-                                <div class="case-title">{{ caso.titulo }}</div>
-                                <div class="case-preview">{{ truncateText(caso.descripcion, 80) }}</div>
+                                <div class="status-group-content" 
+                                     :class="{ collapsed: collapsedGroups[status] }"
+                                     :style="{ maxHeight: collapsedGroups[status] ? '0' : filteredCases[status].length * 80 + 'px' }">
+                                    <div v-for="caso in filteredCases[status]" 
+                                         :key="caso.id"
+                                         class="case-item"
+                                         :class="{ active: selectedCase && selectedCase.id === caso.id }"
+                                         @click="selectCase(caso)">
+                                        <div class="case-item-header">
+                                            <span class="case-id">#{{ caso.id }}</span>
+                                            <span class="case-date">{{ formatDate(caso.fechaCreacion) }}</span>
+                                        </div>
+                                        <div class="case-title">{{ caso.titulo }}</div>
+                                        <div class="case-preview">{{ truncateText(caso.descripcion, 80) }}</div>
+                                    </div>
+                                </div>
                             </div>
                         </template>
-                        <div v-if="filteredCases.length === 0" class="no-cases">
+                        <div v-if="Object.values(filteredCases).every(group => group.length === 0)" class="no-cases">
                             No se encontraron casos
                         </div>
                     </div>
@@ -288,8 +304,7 @@
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M18 8C19.1046 8 20 7.10457 20 6C20 4.89543 19.1046 4 18 4C16.8954 4 16 4.89543 16 6C16 7.10457 16.8954 8 18 8Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                         <path d="M6 12C7.10457 12 8 11.1046 8 10C8 8.89543 7.10457 8 6 8C4.89543 8 4 8.89543 4 10C4 11.1046 4.89543 12 6 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        <path d="M18 4L8.12 9.94" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        <path d="M8.12 14.06L18 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M18.5 2.50001C19.3284 1.67158 20.6716 1.67158 21.5 2.50001C22.3284 3.32844 22.3284 4.67157 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                         <path d="M18 14C19.1046 14 20 13.1046 20 12C20 10.8954 19.1046 10 18 10C16.8954 10 16 10.8954 16 12C16 13.1046 16.8954 14 18 14Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
                                     Compartir
