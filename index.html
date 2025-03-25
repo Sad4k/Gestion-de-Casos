@@ -249,19 +249,23 @@
                         Nuevo Caso
                     </button>
                     <div class="cases-list">
-                        <div 
-                            v-for="caso in filteredCases" 
-                            :key="caso.id" 
-                            class="case-item"
-                            :class="{ active: selectedCase && selectedCase.id === caso.id }"
-                            @click="selectCase(caso)">
-                            <div class="case-item-header">
-                                <span class="case-id">#{{ caso.id }}</span>
-                                <span class="case-date">{{ formatDate(caso.fechaCreacion) }}</span>
+                        <template v-for="(caso, index) in filteredCases" :key="caso.id">
+                            <!-- Add status separator when status changes -->
+                            <div v-if="index === 0 || filteredCases[index-1].estado !== caso.estado" class="status-separator">
+                                {{ caso.estado.charAt(0).toUpperCase() + caso.estado.slice(1) }}
                             </div>
-                            <div class="case-title">{{ caso.titulo }}</div>
-                            <div class="case-preview">{{ truncateText(caso.descripcion, 80) }}</div>
-                        </div>
+                            <div 
+                                class="case-item"
+                                :class="{ active: selectedCase && selectedCase.id === caso.id }"
+                                @click="selectCase(caso)">
+                                <div class="case-item-header">
+                                    <span class="case-id">#{{ caso.id }}</span>
+                                    <span class="case-date">{{ formatDate(caso.fechaCreacion) }}</span>
+                                </div>
+                                <div class="case-title">{{ caso.titulo }}</div>
+                                <div class="case-preview">{{ truncateText(caso.descripcion, 80) }}</div>
+                            </div>
+                        </template>
                         <div v-if="filteredCases.length === 0" class="no-cases">
                             No se encontraron casos
                         </div>
@@ -433,7 +437,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h2>{{ modalTitle }}</h2>
-                    <button class="close-btn" @click="closeModal">&times;</button>
+                    <button class="close-btn" @click="closeModal" @touchstart="closeModal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <form @submit.prevent="saveCase">
@@ -488,7 +492,7 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn primary" @click="saveCase">Guardar</button>
-                    <button class="btn secondary" @click="closeModal">Cancelar</button>
+                    <button class="btn secondary" @click="closeModal" @touchstart="closeModal">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -498,7 +502,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h2>Añadir Nuevo Paso</h2>
-                    <button class="close-btn" @click="closeStepModal">&times;</button>
+                    <button class="close-btn" @click="closeStepModal" @touchstart="closeStepModal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <form @submit.prevent="saveStep">
@@ -553,7 +557,7 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn primary" @click="saveStep">Guardar</button>
-                    <button class="btn secondary" @click="closeStepModal">Cancelar</button>
+                    <button class="btn secondary" @click="closeStepModal" @touchstart="closeStepModal">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -563,7 +567,7 @@
             <div class="modal-content delete-modal">
                 <div class="modal-header">
                     <h2>Confirmar Eliminación</h2>
-                    <button class="close-btn" @click="closeDeleteModal">&times;</button>
+                    <button class="close-btn" @click="closeDeleteModal" @touchstart="closeDeleteModal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <p>¿Está seguro que desea eliminar el caso <strong>{{ selectedCase?.titulo }}</strong>?</p>
@@ -571,7 +575,7 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn danger" @click="deleteCase">Eliminar</button>
-                    <button class="btn secondary" @click="closeDeleteModal">Cancelar</button>
+                    <button class="btn secondary" @click="closeDeleteModal" @touchstart="closeDeleteModal">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -581,7 +585,7 @@
             <div class="modal-content close-case-modal">
                 <div class="modal-header">
                     <h2>Cerrar Caso con Evidencias</h2>
-                    <button class="close-btn" @click="closeCloseCaseModal">&times;</button>
+                    <button class="close-btn" @click="closeCloseCaseModal" @touchstart="closeCloseCaseModal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <p>Está a punto de cerrar el caso <strong>{{ selectedCase?.titulo }}</strong>.</p>
@@ -623,7 +627,7 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn primary" @click="confirmCloseCase">Cerrar Caso</button>
-                    <button class="btn secondary" @click="closeCloseCaseModal">Cancelar</button>
+                    <button class="btn secondary" @click="closeCloseCaseModal" @touchstart="closeCloseCaseModal">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -650,7 +654,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h2>{{ currentViewingFile?.nombre }}</h2>
-                    <button class="close-btn" @click="closeFileViewer">&times;</button>
+                    <button class="close-btn" @click="closeFileViewer" @touchstart="closeFileViewer">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="file-viewer-content">
@@ -691,7 +695,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn secondary" @click="closeFileViewer">Cerrar</button>
+                    <button class="btn secondary" @click="closeFileViewer" @touchstart="closeFileViewer">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -701,7 +705,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h2>Editar Paso</h2>
-                    <button class="close-btn" @click="closeEditStepModal">&times;</button>
+                    <button class="close-btn" @click="closeEditStepModal" @touchstart="closeEditStepModal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <form @submit.prevent="updateStep">
@@ -751,7 +755,7 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn primary" @click="updateStep">Guardar Cambios</button>
-                    <button class="btn secondary" @click="closeEditStepModal">Cancelar</button>
+                    <button class="btn secondary" @click="closeEditStepModal" @touchstart="closeEditStepModal">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -761,7 +765,7 @@
             <div class="modal-content delete-modal">
                 <div class="modal-header">
                     <h2>Confirmar Eliminación de Paso</h2>
-                    <button class="close-btn" @click="closeDeleteStepModal">&times;</button>
+                    <button class="close-btn" @click="closeDeleteStepModal" @touchstart="closeDeleteStepModal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <p>¿Está seguro que desea eliminar este paso?</p>
@@ -769,7 +773,7 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn danger" @click="deleteStep">Eliminar</button>
-                    <button class="btn secondary" @click="closeDeleteStepModal">Cancelar</button>
+                    <button class="btn secondary" @click="closeDeleteStepModal" @touchstart="closeDeleteStepModal">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -779,7 +783,7 @@
             <div class="modal-content config-modal">
                 <div class="modal-header">
                     <h2>Configuración</h2>
-                    <button class="close-btn" @click="closeConfigModal">&times;</button>
+                    <button class="close-btn" @click="closeConfigModal" @touchstart="closeConfigModal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="config-options">
@@ -791,7 +795,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn secondary" @click="closeConfigModal">Cerrar</button>
+                    <button class="btn secondary" @click="closeConfigModal" @touchstart="closeConfigModal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -801,7 +805,7 @@
             <div class="modal-content delete-modal">
                 <div class="modal-header">
                     <h2>Confirmar Restablecimiento</h2>
-                    <button class="close-btn" @click="closeResetConfirmModal">&times;</button>
+                    <button class="close-btn" @click="closeResetConfirmModal" @touchstart="closeResetConfirmModal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <p>¿Está seguro que desea restablecer todos los datos?</p>
@@ -809,7 +813,7 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn danger" @click="resetAllData">Restablecer</button>
-                    <button class="btn secondary" @click="closeResetConfirmModal">Cancelar</button>
+                    <button class="btn secondary" @click="closeResetConfirmModal" @touchstart="closeResetConfirmModal">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -819,7 +823,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h2>Compartir Caso</h2>
-                    <button class="close-btn" @click="closeShareModal">&times;</button>
+                    <button class="close-btn" @click="closeShareModal" @touchstart="closeShareModal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
@@ -830,7 +834,7 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn primary" @click="shareCase">Compartir</button>
-                    <button class="btn secondary" @click="closeShareModal">Cancelar</button>
+                    <button class="btn secondary" @click="closeShareModal" @touchstart="closeShareModal">Cancelar</button>
                 </div>
             </div>
         </div>
